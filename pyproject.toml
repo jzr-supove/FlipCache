@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "PyCache"
-version = "0.0.1"
+name = "FlipCache"
+version = "1.0"
 description = 'Redis-backed hybrid caching for lightning-fast Python data access'
 readme = "README.md"
 requires-python = ">=3.6"
@@ -36,29 +36,5 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/goodeejay/PyCache"
-Issues = "https://github.com/goodeejay/PyCache/issues"
-
-[tool.hatch.envs.default.scripts]
-reformat = [
-    "black pycache tests",
-    "isort pycache tests",
-]
-
-[tool.black]
-line-length = 99
-target-version = ['py38', 'py39', 'py310', 'py311']
-exclude = '''
-(
-    \.eggs
-  | \.git
-  | \.tox
-  | build
-  | dist
-  | .venv
-  | docs
-)
-'''
-
-[tool.isort]
-profile = "black"
+Homepage = "https://github.com/goodeejay/FlipCache"
+Issues = "https://github.com/goodeejay/FlipCache/issues"
