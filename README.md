@@ -1,15 +1,25 @@
-<img align="right" src="assets/logo.jpg" alt="PyCache Logo" height="250px" width="auto">
-
 # ⚡️ FlipCache
+
+[![Downloads total](https://pepy.tech/badge/flipcache)](https://pepy.tech/project/flipcache)
+[![Downloads monthly](https://img.shields.io/pypi/dm/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
+[![PyPi Package Version](https://img.shields.io/pypi/v/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
+[![PyPi status](https://img.shields.io/pypi/status/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
+[![Supported python versions](https://img.shields.io/pypi/pyversions/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
+[![Github issues](https://img.shields.io/github/issues/goodeejay/flipcache.svg)](https://github.com/goodeejay/flipcache/issues)
+[![MIT License](https://img.shields.io/pypi/l/flipcache.svg)](https://opensource.org/licenses/MIT)
+![Views](https://komarev.com/ghpvc/?username=flipcache&label=views)
+
+<img style="z-index=-1" align="right" src="assets/logo.jpg" alt="PyCache Logo" height="250px" width="auto">
 
 Redis-backed hybrid caching for lightning-fast Python data access
 
-## 🤷‍♂️ Why FlipCache?
+### 🤷‍♂️ Why FlipCache?
 
 - Seamlessly integrate Redis for accelerated data retrieval in your Python projects.
 - Optimize performance with an in-memory cache layer backed by Redis persistence.
 - Enjoy ease-of-use and flexible configuration
 
+<br/>
 
 ## 📥 Installation
 ```bash
