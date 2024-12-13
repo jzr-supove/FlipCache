@@ -1,7 +1,7 @@
 from flipcache import FlipCache
 
 """
-Initializing PyCache with default values
+Initializing FlipCache with default values
 - local_max = 100
 - expire_time = None
 - key_type = str
@@ -56,7 +56,7 @@ def showcase():
 
     # MEMBERSHIP CHECK
     print("hello" in cache)  # False
-    print(123 in cache)      # True
+    print(123 in cache)  # True
 
     # ITERATE OVER KEYS
 
@@ -80,5 +80,5 @@ def showcase():
     # REFRESH
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     showcase()

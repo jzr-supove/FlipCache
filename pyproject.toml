@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "FlipCache"
-version = "1.0"
+version = "1.1"
 description = 'Redis-backed hybrid caching for lightning-fast Python data access'
 readme = "README.md"
 requires-python = ">=3.6"

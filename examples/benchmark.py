@@ -43,7 +43,7 @@ def benchmark(func):
     print("==============")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     benchmark(redis_set)
     benchmark(pycache_set)
 

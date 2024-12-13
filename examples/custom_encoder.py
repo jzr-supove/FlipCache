@@ -22,23 +22,23 @@ def decode_shape(shape: str) -> Shape:
     data = shape.split("||")
     return Shape(
         name=data[0],
-        dimensions=[float(num) for num in data[1].strip('[]').split(',') if num],
+        dimensions=[float(num) for num in data[1].strip("[]").split(",") if num],
         edges=int(data[2]),
-        area=float(data[3])
+        area=float(data[3]),
     )
 
 
-my_shape = Shape(name='womp', dimensions=[4.1, 3.4], edges=6, area=16.38)
-shape2 = Shape(name='wat', dimensions=[11, 22])
+my_shape = Shape(name="womp", dimensions=[4.1, 3.4], edges=6, area=16.38)
+shape2 = Shape(name="wat", dimensions=[11, 22])
 
 custom = FlipCache(
     "custom",
     local_max=0,
-    key_type='int',
-    value_type='custom',
+    key_type="int",
+    value_type="custom",
     value_default=Shape(),
     value_encoder=encode_shape,
-    value_decoder=decode_shape
+    value_decoder=decode_shape,
 )
 
 custom[123] = my_shape

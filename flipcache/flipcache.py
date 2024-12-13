@@ -5,28 +5,27 @@ from collections import OrderedDict
 
 
 STRINT = Union[str, int]
-KEY_TYPES = {'str', 'int'}
-VALUE_TYPES = {'str', 'int', 'json', 'custom'}
+KEY_TYPES = {"str", "int"}
+VALUE_TYPES = {"str", "int", "json", "custom"}
 
 
 class FlipCache:
-
     def __init__(
-            self,
-            name: str,
-            *,
-            local_max: int = 100,
-            expire_time: Optional[int] = None,
-            key_type: Literal['str', 'int'] = 'str',
-            value_type: Literal['str', 'int', 'json', 'custom'] = 'str',
-            value_default: Any = None,
-            value_encoder: Optional[Callable] = None,
-            value_decoder: Optional[Callable] = None,
-            redis_protocol: redis.Redis = None,
-            refresh_expire_time_on_get: bool = False
+        self,
+        name: str,
+        *,
+        local_max: int = 100,
+        expire_time: Optional[int] = None,
+        key_type: Literal["str", "int"] = "str",
+        value_type: Literal["str", "int", "json", "custom"] = "str",
+        value_default: Any = None,
+        value_encoder: Optional[Callable] = None,
+        value_decoder: Optional[Callable] = None,
+        redis_protocol: redis.Redis = None,
+        refresh_expire_time_on_get: bool = False,
     ) -> None:
         """
-        PyCache class
+        FlipCache class
 
         :param name: Name of the cache, key prefix for redis
             If not specified keys will be used with redis without prefixes.
@@ -51,20 +50,25 @@ class FlipCache:
         """
 
         assert key_type in KEY_TYPES, "Invalid key_type, must be 'int' or 'str'"
-        assert value_type in VALUE_TYPES, "Invalid value_type, must be 'str', 'int', 'json' or 'custom'"
+        assert (
+            value_type in VALUE_TYPES
+        ), "Invalid value_type, must be 'str', 'int', 'json' or 'custom'"
         assert local_max is not None, "local_max cannot be None"
 
-        if value_type == 'custom':
-            assert value_encoder and value_decoder, ("value_encoder and value_decoder must be passed when value_type "
-                                                     "set to 'custom'")
+        if value_type == "custom":
+            assert value_encoder and value_decoder, (
+                "value_encoder and value_decoder must be passed when value_type "
+                "set to 'custom'"
+            )
             assert callable(value_encoder), "value_encoder must be a function"
             assert callable(value_decoder), "value_decoder must be a function"
 
         if isinstance(redis_protocol, redis.Redis):
             kwargs = redis_protocol.get_connection_kwargs()
-            assert kwargs.get(
-                "decode_responses", False
-            ), "Redis protocol with decode_responses=True must be passed"
+            if value_type != "custom":
+                assert kwargs.get(
+                    "decode_responses", False
+                ), "Redis protocol with decode_responses=True must be passed when using non-custom value_type"
             self._redis = redis_protocol
         else:
             self._redis = redis.Redis(decode_responses=True)
@@ -77,21 +81,21 @@ class FlipCache:
         self._refresh_et = refresh_expire_time_on_get
 
         self._kt = str
-        if key_type == 'int':
+        if key_type == "int":
             self._kt = int
 
         self._encoder = str
         self._decoder = None
 
-        if value_type == 'json':
+        if value_type == "json":
             self._encoder = json.dumps
             self._decoder = json.loads
 
-        elif value_type == 'int':
+        elif value_type == "int":
             self._encoder = None
             self._decoder = int
 
-        elif value_type == 'custom':
+        elif value_type == "custom":
             self._encoder = value_encoder
             self._decoder = value_decoder
 
@@ -152,18 +156,24 @@ class FlipCache:
 
     def __iter__(self) -> Iterator[STRINT]:
         for key in self._redis.scan_iter(match=f"{self._kp}:*"):
-            yield self._kt(key[key.find(":") + 1:])
+            yield self._kt(key[key.find(":") + 1 :])
 
     def __len__(self) -> int:
         count = 0
         cursor = "0"
         while cursor != 0:
-            cursor, data = self._redis.scan(cursor=cursor, match=f"{self._kp}:*", count=100)
+            cursor, data = self._redis.scan(
+                cursor=cursor, match=f"{self._kp}:*", count=100
+            )
             count += len(data)
         return count
 
     def __repr__(self) -> str:
-        return f"FlipCache<{self._kp}>(" + str([(k, v) for k, v in self.__data.items()]) + ")"
+        return (
+            f"FlipCache<{self._kp}>("
+            + str([(k, v) for k, v in self.__data.items()])
+            + ")"
+        )
 
     @property
     def local(self) -> OrderedDict:
