@@ -9,7 +9,7 @@
 [![MIT License](https://img.shields.io/pypi/l/flipcache.svg)](https://opensource.org/licenses/MIT)
 ![Views](https://komarev.com/ghpvc/?username=flipcache&label=views)
 
-<img style="z-index=-1" align="right" src="assets/logo.jpg" alt="PyCache Logo" height="250px" width="auto">
+<img style="z-index:-1; float:right" src="assets/logo.jpg" alt="PyCache Logo" height="250px" width="auto">
 
 Redis-backed hybrid caching for lightning-fast Python data access
 
@@ -157,9 +157,48 @@ print(custom[321])  # Shape(name='default', dimensions=[], edges=0, area=0.0)
 print(custom[456])  # Shape(name='wat', dimensions=[11.0, 22.0], edges=0, area=242.0)
 ```
 
+### FIFODict Example (First-In, First-Out)
+
+```python
+from flipcache import FIFODict
+
+cache = FIFODict(max_items=3)
+
+cache["a"] = "Apple"
+cache["b"] = "Banana"
+cache["c"] = "Cherry"
+
+print(list(cache.keys()))  # ['a', 'b', 'c']
+
+cache["d"] = "Date"  # Evicts 'a' (oldest)
+
+print(list(cache.keys()))  # ['b', 'c', 'd']
+```
+✅ Items are evicted in the order they were inserted.
+
+### LRUDict Example (Least Recently Used)
+
+```python
+from flipcache import LRUDict
+
+cache = LRUDict(max_items=3)
+
+cache["a"] = "Alpha"
+cache["b"] = "Beta"
+cache["c"] = "Gamma"
+_ = cache["a"]  # Access 'a', making it most recently used
+
+cache["d"] = "Delta"  # Evicts 'b' (least recently used)
+
+print(list(cache.keys()))  # ['c', 'a', 'd']
+```
+✅ Accessing a key moves it to the end (most recently used).
+
+
 For more usage examples and details, see [examples](./examples)
 
 ## ⚙️ Configuration Options
+### FlipCache
 - `local_max`: Maximum items in the in-memory cache.
 - `expire_time`: Redis key expiration time.
 - `key_type`: Expected key data type.
@@ -168,6 +207,10 @@ For more usage examples and details, see [examples](./examples)
 - `value_decoder`: Custom function used to decode the value from redis
 - `refresh_expire_time_on_get`: Refresh Redis key expiration on access
 - `redis_protocol`: custom redis.Redis instance to be passed
+
+### FIFODict and LRUDict
+- `max_items`: Maximum number of items the dict can hold (defaults 1000)
+
 
 ## 📊 Benchmarks
 
