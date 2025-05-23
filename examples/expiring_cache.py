@@ -1,5 +1,5 @@
 import time
-from flipcache import FlipCache, et
+from flipcache import FlipCache
 
 
 """
@@ -29,9 +29,8 @@ def showcase():
     # Now, do the same actions on `refreshing` cache
     refreshing["first"] = "Hello, World!"
     time.sleep(1)
-    print(
-        refreshing["first"]
-    )  # Here redis key expire time refreshes when we access the key
+    # Here redis key expire time refreshes when we access the key
+    print(refreshing["first"])
     refreshing["second"] = "Python"
     time.sleep(1)
 

@@ -50,9 +50,9 @@ class FlipCache:
         """
 
         assert key_type in KEY_TYPES, "Invalid key_type, must be 'int' or 'str'"
-        assert (
-            value_type in VALUE_TYPES
-        ), "Invalid value_type, must be 'str', 'int', 'json' or 'custom'"
+        assert value_type in VALUE_TYPES, (
+            "Invalid value_type, must be 'str', 'int', 'json' or 'custom'"
+        )
         assert local_max is not None, "local_max cannot be None"
 
         if value_type == "custom":
@@ -66,9 +66,9 @@ class FlipCache:
         if isinstance(redis_protocol, redis.Redis):
             kwargs = redis_protocol.get_connection_kwargs()
             if value_type != "custom":
-                assert kwargs.get(
-                    "decode_responses", False
-                ), "Redis protocol with decode_responses=True must be passed when using non-custom value_type"
+                assert kwargs.get("decode_responses", False), (
+                    "Redis protocol with decode_responses=True must be passed when using non-custom value_type"
+                )
             self._redis = redis_protocol
         else:
             self._redis = redis.Redis(decode_responses=True)
@@ -160,12 +160,14 @@ class FlipCache:
 
     def __len__(self) -> int:
         count = 0
-        cursor = "0"
-        while cursor != 0:
+        cursor = 0
+        while True:
             cursor, data = self._redis.scan(
                 cursor=cursor, match=f"{self._kp}:*", count=100
             )
             count += len(data)
+            if cursor == 0:
+                break
         return count
 
     def __repr__(self) -> str:
