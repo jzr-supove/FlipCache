@@ -1,5 +1,9 @@
+import copy
 import json
+import math
+import time
 import redis
+from datetime import timedelta
 from typing import Any, Union, Optional, Literal, Callable, Iterator
 from collections import OrderedDict
 
@@ -9,13 +13,22 @@ KEY_TYPES = {"str", "int"}
 VALUE_TYPES = {"str", "int", "json", "custom"}
 
 
+def _to_seconds(expire_time: Union[int, float, timedelta, None]) -> Optional[int]:
+    """Redis accepts only whole seconds (or a timedelta); round fractions up."""
+    if expire_time is None:
+        return None
+    if isinstance(expire_time, timedelta):
+        expire_time = expire_time.total_seconds()
+    return int(math.ceil(expire_time))
+
+
 class FlipCache:
     def __init__(
         self,
         name: str,
         *,
         local_max: int = 100,
-        expire_time: Optional[int] = None,
+        expire_time: Union[int, float, timedelta, None] = None,
         key_type: Literal["str", "int"] = "str",
         value_type: Literal["str", "int", "json", "custom"] = "str",
         value_default: Any = None,
@@ -31,8 +44,8 @@ class FlipCache:
             If not specified keys will be used with redis without prefixes.
         :param local_max: Max number of elements to store in Python memory for fast retrieval.
             If not specified it will be 100 by default.
-        :param expire_time: Expire time of a redis key.
-            If not specified it will disable expiring keys.
+        :param expire_time: Expire time of a redis key, in seconds (int or float) or a timedelta.
+            Fractions are rounded up to whole seconds. If not specified it will disable expiring keys.
         :param key_type: Data type of key, can be 'str' or 'int'. Defaults to 'str'
         :param value_type: Data type of value to be stored. Defaults to 'str'
             Possible options are 'str', 'int', 'json' or 'custom'
@@ -75,7 +88,9 @@ class FlipCache:
 
         self.__data = OrderedDict()
         self._lmax = local_max
-        self._et = expire_time
+        self._et = _to_seconds(expire_time)
+        # monotonic time of each key's last Redis write or TTL refresh
+        self._touched = {}
         self._kp = name
         self._default = value_default
         self._refresh_et = refresh_expire_time_on_get
@@ -107,6 +122,8 @@ class FlipCache:
             key = self._kt(key)
 
         if key in self.__data:
+            if self._et and self._refresh_et:
+                self._refresh_if_due(key)
             return self.__data[key]
         else:
             data = self._redis.get(self._key(key))
@@ -117,18 +134,23 @@ class FlipCache:
 
                 if len(self.__data) >= self._lmax:
                     self.__data[key] = data
-                    self.__data.popitem(last=False)
+                    self._evict_oldest()
                 else:
                     self.__data[key] = data
 
                 if self._et and self._refresh_et:
                     self._redis.expire(self._key(key), self._et)
+                self._touched[key] = time.monotonic()
 
                 return data
             else:
-                if self._default is not None:
-                    self.__setitem__(key, self._default)
-                return self._default
+                if self._default is None:
+                    return None
+                # A fresh copy per key, so mutating one key's value can't change the
+                # default (and every later missing key) for everyone else.
+                default = copy.deepcopy(self._default)
+                self.__setitem__(key, default)
+                return default
 
     def __setitem__(self, key: STRINT, data: Any) -> None:
         if type(key) is not self._kt:
@@ -139,6 +161,7 @@ class FlipCache:
         if self._encoder:
             data = self._encoder(data)
         self._redis.set(self._key(key), data, ex=self._et)
+        self._touched[key] = time.monotonic()
         self._check_size_limit()
 
     def __delitem__(self, key: STRINT) -> None:
@@ -147,6 +170,7 @@ class FlipCache:
 
         if key in self.__data:
             del self.__data[key]
+        self._touched.pop(key, None)
         self._redis.delete(self._key(key))
 
     def __contains__(self, key: STRINT) -> bool:
@@ -181,13 +205,35 @@ class FlipCache:
     def local(self) -> OrderedDict:
         return self.__data
 
+    def _evict_oldest(self) -> None:
+        if not self.__data:
+            return
+        evicted, _ = self.__data.popitem(last=False)
+        self._touched.pop(evicted, None)
+
     def _check_size_limit(self) -> None:
         if len(self.__data) > self._lmax:
-            self.__data.popitem(last=False)
+            self._evict_oldest()
+
+    def _refresh_if_due(self, key: STRINT) -> None:
+        """
+        Local hits skip Redis, so the Redis TTL would run out on keys that are only
+        ever read locally. Refresh it at most once per half TTL per key: most reads
+        stay local, and a key that keeps being read never expires.
+        """
+        now = time.monotonic()
+        last = self._touched.get(key)
+        if last is None or now - last >= self._et / 2:
+            self._redis.expire(self._key(key), self._et)
+            self._touched[key] = now
 
     def refresh(self, key: STRINT) -> None:
+        if type(key) is not self._kt:
+            key = self._kt(key)
+
         if key in self.__data:
             self.__data.move_to_end(key)
 
         if self._et:
             self._redis.expire(self._key(key), time=self._et)
+            self._touched[key] = time.monotonic()

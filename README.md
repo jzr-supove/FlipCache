@@ -5,7 +5,7 @@
 [![PyPi Package Version](https://img.shields.io/pypi/v/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
 [![PyPi status](https://img.shields.io/pypi/status/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
 [![Supported python versions](https://img.shields.io/pypi/pyversions/flipcache.svg)](https://pypi.python.org/pypi/flipcache)
-[![Github issues](https://img.shields.io/github/issues/goodeejay/flipcache.svg)](https://github.com/goodeejay/flipcache/issues)
+[![Github issues](https://img.shields.io/github/issues/jzr-supove/FlipCache.svg)](https://github.com/jzr-supove/FlipCache/issues)
 [![MIT License](https://img.shields.io/pypi/l/flipcache.svg)](https://opensource.org/licenses/MIT)
 ![Views](https://komarev.com/ghpvc/?username=flipcache&label=views)
 
@@ -200,12 +200,12 @@ For more usage examples and details, see [examples](./examples)
 ## ⚙️ Configuration Options
 ### FlipCache
 - `local_max`: Maximum items in the in-memory cache.
-- `expire_time`: Redis key expiration time.
+- `expire_time`: Redis key expiration time, in seconds (int or float, rounded up) or a `timedelta`.
 - `key_type`: Expected key data type.
 - `value_type`: Expected value data type.
 - `value_encoder`: Custom function used to encode the value for redis
 - `value_decoder`: Custom function used to decode the value from redis
-- `refresh_expire_time_on_get`: Refresh Redis key expiration on access
+- `refresh_expire_time_on_get`: Refresh Redis key expiration on access. Reads served from local memory refresh it at most once per half `expire_time` per key, so hot keys don't expire in Redis
 - `redis_protocol`: custom redis.Redis instance to be passed
 
 ### FIFODict and LRUDict
